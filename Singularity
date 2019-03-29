@@ -1,4 +1,4 @@
-Bootstrap: library
+Bootstrap: shub
 From: nturaga/bioconductor_full
 
 %post
