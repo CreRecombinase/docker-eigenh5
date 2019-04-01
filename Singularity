@@ -1,4 +1,3 @@
-## Emacs, make this -*- mode: sh; -*-
 Bootstrap: docker
 From: zamora/r-devtools
 
