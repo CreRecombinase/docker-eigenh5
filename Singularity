@@ -4,9 +4,38 @@ From: rocker/tidyverse
 %post
     echo "CXX17=g++-8" >> $(R RHOME)/etc/Makeconf
     echo "CXX17STD = -std=gnu++17" >> $(R RHOME)/etc/Makeconf
-    sudo apt-get install -y --no-install-recommends software-properties-common
-    add-apt-repository -y ppa:ubuntu-toolchain-r/test
+    echo "CXX17FLAGS =$(R CMD config CXXFLAGS) -I/opt/intel/mkl/include -Wno-deprecated-declarations -Wno-ignored-attributes" >> $(R RHOME)/etc/Makeconf
+    echo "CXX11FLAGS =$(R CMD config CXX11FLAGS) -I/opt/intel/mkl/include -Wno-deprecated-declarations -Wno-ignored-attributes" >> $(R RHOME)/etc/Makeconf
+    echo "CXX14FLAGS =$(R CMD config CXX14FLAGS) -I/opt/intel/mkl/include -Wno-deprecated-declarations -Wno-ignored-attributes" >> $(R RHOME)/etc/Makeconf
+    echo "CXXFLAGS =$(R CMD config CXXFLAGS) -I/opt/intel/mkl/include -Wno-deprecated-declarations -Wno-ignored-attributes" >> $(R RHOME)/etc/Makeconf
+    echo "CXX17PICFLAGS = -fpic" >> $(R RHOME)/etc/Makeconf
+    echo "SHLIB_CXX17LD = g++-8 -std=gnu++17" >> $(R RHOME)/etc/Makeconf
+    echo "SHLIB_CXX17LDFLAGS = -shared" >> $(R RHOME)/etc/Makeconf
+    echo "FFLAGS = $(R CMD config FFLAGS) -I/opt/intel/mkl/include" >> $(R RHOME)/etc/Makeconf
+    echo "SAFE_FFLAGS = $(R CMD config SAFE_FFLAGS) -I/opt/intel/mkl/include" >> $(R RHOME)/etc/Makeconf
+    echo "FCFLAGS = $(R CMD config FCFLAGS) -I/opt/intel/mkl/include" >> $(R RHOME)/etc/Makeconf
+    apt-get install -y apt-transport-https
+    wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB
+    sudo sh -c 'echo deb https://apt.repos.intel.com/mkl all main > /etc/apt/sources.list.d/intel-mkl.list'
+    echo "deb http://ftp.us.debian.org/debian unstable main contrib non-free" >> /etc/apt/sources.list.d/unstable.list
+    apt-get update -y -qq
+    apt-get install -y gnupg
+    apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB
+    apt-get install -y -t unstable g++-8
+    apt-get install -y --allow-unauthenticated intel-mkl-64bit-2019.3-062
+    update-alternatives --install /usr/lib/x86_64-linux-gnu/libblas.so     \
+                    libblas.so-x86_64-linux-gnu      /opt/intel/mkl/lib/intel64/libmkl_rt.so 50
+update-alternatives --install /usr/lib/x86_64-linux-gnu/libblas.so.3   \
+                    libblas.so.3-x86_64-linux-gnu    /opt/intel/mkl/lib/intel64/libmkl_rt.so 50
+update-alternatives --install /usr/lib/x86_64-linux-gnu/liblapack.so   \
+                    liblapack.so-x86_64-linux-gnu    /opt/intel/mkl/lib/intel64/libmkl_rt.so 50
+update-alternatives --install /usr/lib/x86_64-linux-gnu/liblapack.so.3 \
+                    liblapack.so.3-x86_64-linux-gnu  /opt/intel/mkl/lib/intel64/libmkl_rt.so 50
+    echo "/opt/intel/lib/intel64"     >  /etc/ld.so.conf.d/mkl.conf
+    echo "/opt/intel/mkl/lib/intel64" >> /etc/ld.so.conf.d/mkl.conf
+    ldconfig
     g++-8 --version
-    apt-get update -qq && apt-get -y --no-install-recommends install g++-8
-    installGithub.r --deps TRUE	grimbough/Rhdf5lib CreRecombinase/EigenH5@chunkreader stephenslab/ldshrink@refactor CreRecombinase/SeqSupport CreRecombinase/RSSp
-    R -e "BiocManager::install('VariantAnnotation');devtools::install_bitbucket('Wenan/caviarbf',subdir='caviarbf-r-package/caviarbf')""
+    echo "MKL_THREADING_LAYER=GNU" >> /etc/environment
+    installGithub.r --deps TRUE	RcppCore/RcppParallel grimbough/Rhdf5lib CreRecombinase/EigenH5@chunkreader stephenslab/ldshrink@refactor CreRecombinase/SeqSupport CreRecombinase/RSSp
+    R -e "BiocManager::install('VariantAnnotation');"
+    apt-get remove -y apt-transport-https
